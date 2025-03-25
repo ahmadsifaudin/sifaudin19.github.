@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kalkulator Canggih</title>
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #f7f7f7;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background: linear-gradient(135deg, #FF8C00, #FF4500);
+    }
+
+    h1 {
+      color: white;
+      font-size: 2.5rem;
+      margin-bottom: 20px;
+      text-align: center;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    .calculator {
+      background: #333;
+      padding: 20px;
+      border-radius: 20px;
+      box-shadow: 0 15px 20px rgba(0, 0, 0, 0.2);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      width: 320px;
+      margin-top: 20px;
+    }
+
+    input {
+      grid-column: span 4;
+      height: 60px;
+      font-size: 28px;
+      color: white;
+      text-align: right;
+      background-color: #1f2d3b;
+      border: none;
+      border-radius: 15px;
+      padding: 15px;
+      box-sizing: border-box;
+      margin-bottom: 20px;
+    }
+
+    button {
+      height: 50px;
+      font-size: 20px;
+      color: white;
+      border: none;
+      border-radius: 15px;
+      background-color: #007bff;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+      transform: scale(1.1);
+    }
+
+    button:active {
+      transform: scale(0.95);
+    }
+
+    .wide {
+      grid-column: span 2;
+    }
+
+    .operation {
+      background-color: #f05a28;
+    }
+
+    .operation:hover {
+      background-color: #d1491b;
+    }
+
+    .function {
+      background-color: #9b59b6;
+    }
+
+    .function:hover {
+      background-color: #8e44ad;
+    }
+
+    .clear {
+      background-color: #e74c3c;
+    }
+
+    .clear:hover {
+      background-color: #c0392b;
+    }
+
+    .equal {
+      background-color: #2ecc71;
+    }
+
+    .equal:hover {
+      background-color: #27ae60;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Kalkulator </h1>
+    <div class="calculator">
+      <input type="text" id="display" disabled placeholder="0">
+      
+      <button onclick="appendNumber(7)">7</button>
+      <button onclick="appendNumber(8)">8</button>
+      <button onclick="appendNumber(9)">9</button>
+      <button onclick="chooseOperation('/')" class="operation">/</button>
+
+      <button onclick="appendNumber(4)">4</button>
+      <button onclick="appendNumber(5)">5</button>
+      <button onclick="appendNumber(6)">6</button>
+      <button onclick="chooseOperation('*')" class="operation">*</button>
+
+      <button onclick="appendNumber(1)">1</button>
+      <button onclick="appendNumber(2)">2</button>
+      <button onclick="appendNumber(3)">3</button>
+      <button onclick="chooseOperation('-')" class="operation">-</button>
+
+      <button onclick="appendNumber(0)">0</button>
+      <button onclick="appendDot()">.</button>
+      <button onclick="compute()" class="equal">=</button>
+      <button onclick="chooseOperation('+')" class="operation">+</button>
+
+      <button onclick="clearDisplay()" class="wide clear">C</button>
+      <button onclick="computeSin()" class="function">sin</button>
+      <button onclick="computeCos()" class="function">cos</button>
+      <button onclick="computeTan()" class="function">tan</button>
+      <button onclick="computeLog()" class="function">log</button>
+      <button onclick="computeLn()" class="function">ln</button>
+      <button onclick="computeExp()" class="function">exp</button>
+
+      <button onclick="appendParenthesis('(')" class="function">(</button>
+      <button onclick="appendParenthesis(')')" class="function">)</button>
+    </div>
+  </div>
+
+  <script>
+    let display = document.getElementById("display");
+    let currentOperation = null;
+    let firstOperand = null;
+    let waitingForSecondOperand = false;
+    let isFunctionPressed = false; // Flag untuk cek apakah tombol fungsi ditekan
+
+    function appendNumber(number) {
+      if (waitingForSecondOperand) {
+        display.value = number.toString();
+        waitingForSecondOperand = false;
+      } else {
+        display.value = display.value === "0" ? number.toString() : display.value + number;
+      }
+    }
+
+    function appendDot() {
+      if (!display.value.includes(".")) {
+        display.value += ".";
+      }
+    }
+
+    function clearDisplay() {
+      display.value = "0";
+      firstOperand = null;
+      currentOperation = null;
+      waitingForSecondOperand = false;
+      isFunctionPressed = false;
+    }
+
+    function chooseOperation(operation) {
+      if (currentOperation && waitingForSecondOperand) {
+        currentOperation = operation;
+        return;
+      }
+      if (firstOperand === null) {
+        firstOperand = parseFloat(display.value);
+      } else if (currentOperation) {
+        const result = computeResult();
+        display.value = result;
+        firstOperand = result;
+      }
+      currentOperation = operation;
+      waitingForSecondOperand = true;
+    }
+
+    function compute() {
+      if (!currentOperation && !isFunctionPressed) return;
+
+      if (isFunctionPressed) {
+        computeFunction();
+      } else {
+        const result = computeResult();
+        display.value = result;
+        firstOperand = result;
+      }
+      
+      currentOperation = null;
+      waitingForSecondOperand = false;
+      isFunctionPressed = false; // Reset flag fungsi
+    }
+
+    function computeResult() {
+      const secondOperand = parseFloat(display.value);
+      switch (currentOperation) {
+        case "+":
+          return firstOperand + secondOperand;
+        case "-":
+          return firstOperand - secondOperand;
+        case "*":
+          return firstOperand * secondOperand;
+        case "/":
+          return firstOperand / secondOperand;
+        default:
+          return secondOperand;
+      }
+    }
+
+    function computeSin() {
+      isFunctionPressed = true;
+      firstOperand = parseFloat(display.value);
+      display.value = 'sin(' + firstOperand + ')';
+    }
+
+    function computeCos() {
+      isFunctionPressed = true;
+      firstOperand = parseFloat(display.value);
+      display.value = 'cos(' + firstOperand + ')';
+    }
+
+    function computeTan() {
+      isFunctionPressed = true;
+      firstOperand = parseFloat(display.value);
+      display.value = 'tan(' + firstOperand + ')';
+    }
+
+    function computeLog() {
+      isFunctionPressed = true;
+      firstOperand = parseFloat(display.value);
+      display.value = 'log(' + firstOperand + ')';
+    }
+
+    function computeLn() {
+      isFunctionPressed = true;
+      firstOperand = parseFloat(display.value);
+      display.value = 'ln(' + firstOperand + ')';
+    }
+
+    function computeExp() {
+      isFunctionPressed = true;
+      firstOperand = parseFloat(display.value);
+      display.value = 'exp(' + firstOperand + ')';
+    }
+
+    function computeFunction() {
+      let value = firstOperand;
+      if (display.value.includes('sin')) {
+        display.value = Math.sin(value * (Math.PI / 180)).toFixed(5);
+      } else if (display.value.includes('cos')) {
+        display.value = Math.cos(value * (Math.PI / 180)).toFixed(5);
+      } else if (display.value.includes('tan')) {
+        display.value = Math.tan(value * (Math.PI / 180)).toFixed(5);
+      } else if (display.value.includes('log')) {
+        display.value = Math.log10(value).toFixed(5);
+      } else if (display.value.includes('ln')) {
+        display.value = Math.log(value).toFixed(5);
+      } else if (display.value.includes('exp')) {
+        display.value = Math.exp(value).toFixed(5);
+      }
+    }
+
+    function appendParenthesis(parenthesis) {
+      display.value = display.value === "0" ? parenthesis : display.value + parenthesis;
+    }
+  </script>
+</body>
+</html>
